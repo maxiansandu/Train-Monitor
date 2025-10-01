@@ -10,4 +10,8 @@
     <ProjectReference Include="..\TrainMonitor.domain\TrainMonitor.domain.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Services\" />
+  </ItemGroup>
+
 </Project>

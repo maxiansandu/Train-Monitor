@@ -12,12 +12,14 @@ public class ApplicationDbContext: DbContext
     }
 
     public DbSet<Train> Trains { get; set; }
+    public DbSet<Account> Accounts { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
         
         modelBuilder.ApplyConfiguration(new TrainConfiguration());
+        modelBuilder.ApplyConfiguration(new AccountConfiguration());
 
     }
 }

@@ -8,7 +8,7 @@ public class TrainConfiguration: IEntityTypeConfiguration<Train>
 {
     public void Configure(EntityTypeBuilder<Train> builder)
     {
-        builder.ToTable("Trains");
+        builder.ToTable("trains");
         builder.HasKey(t => t.Id);
         builder.Property(t => t.Id).HasColumnName("id");
         builder.Property(t => t.Name).HasColumnName("name");

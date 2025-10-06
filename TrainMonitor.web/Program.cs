@@ -19,6 +19,7 @@ builder.Services.AddDistributedMemoryCache();
 // Add services to the container.
 builder.Services.AddControllersWithViews(); 
 
+
 //Session
 builder.Services.AddDistributedMemoryCache();
 builder.Services.AddSession(options =>
@@ -30,7 +31,7 @@ builder.Services.AddSession(options =>
 builder.Services.AddHttpContextAccessor();
 //Respositories
 builder.Services.AddScoped<IAccountRepository, AccountRepository>();
-builder.Services.AddScoped<IHttpContextAccessor, HttpContextAccessor>();
+
 
 
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");

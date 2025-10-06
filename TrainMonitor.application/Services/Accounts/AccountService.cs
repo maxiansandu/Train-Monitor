@@ -47,6 +47,7 @@ public class AccountService: IAccountService
         {
             throw new AccountNotFoundException();
         }
+        _httpContextAccessor.HttpContext.Session.SetString("authenticated_account_id", account.Id.ToString());
         return account;
 
     }

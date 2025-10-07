@@ -1,10 +1,11 @@
 using Microsoft.EntityFrameworkCore;
 using TrainMonitor.domain.Entities;
+using TrainMonitor.domain.Exceptions;
 using BCryptNet = BCrypt.Net.BCrypt;
 
 namespace TrainMonitor.repository.Repositories;
 
-public class AccountRepository: IAccountRepository
+public class AccountRepository : IAccountRepository
 {
     private readonly ApplicationDbContext _context;
     public AccountRepository(ApplicationDbContext context)
@@ -14,7 +15,7 @@ public class AccountRepository: IAccountRepository
     public async Task<bool> IsEmailTakenAsync(string email)
     {
         var result = _context.Accounts.Any(a => a.Email == email);
-        ;return result;
+        ; return result;
     }
 
     public async Task<Account> AddAsync(Account account)
@@ -25,22 +26,20 @@ public class AccountRepository: IAccountRepository
 
     }
 
-    public async Task<Account> LogInAsync(string hashedPassword, string email)
+    public async Task<Account> GetAccountByEmailAsync(string email)
     {
-        var account =  await _context.Accounts.FirstOrDefaultAsync(a=>a.Email == email);
-        
-        bool result = BCrypt.Net.BCrypt.Verify(hashedPassword, account.Password);
-
-        if (result)
+        var account = await _context.Accounts.FirstOrDefaultAsync(a => a.Email == email);
+        if (account == null)
         {
-            return account;
-        }
-        else
-        {
-            return null;
+            throw new AccountNotFoundException();
         }
 
+        return account;
     }
-    
-    
+
+    public async Task<Account> GetAccountByIdAsync(Guid accountId)
+    {
+        return await _context.Accounts.FirstOrDefaultAsync(a => a.Id == accountId);
+    }
+
 }

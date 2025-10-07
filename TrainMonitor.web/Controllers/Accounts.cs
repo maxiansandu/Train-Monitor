@@ -1,23 +1,28 @@
+using EnviroSense.Web.Filters;
 using Microsoft.AspNetCore.Mvc;
 using TrainMonitor.application.Services.Accounts;
 using TrainMonitor.web.Models.Accounts;
 using TrainMonitor.domain.Exceptions;
+using TrainMonitor.web.Authentication;
 
 namespace TrainMonitor.web.Controllers;
 
 public class Accounts : Controller
 {
     private readonly IAccountService _accountService;
-    public Accounts(IAccountService  accountService)
+    private readonly ISessionAuthentication _sessionAuthentication;
+    public Accounts(IAccountService accountService, ISessionAuthentication sessionAuthentication)
     {
         _accountService = accountService;
+        _sessionAuthentication = sessionAuthentication;
     }
-    
+    [TypeFilter(typeof(SignedOutFilter))]
     public IActionResult SignUp()
     {
         return View();
     }
     [HttpPost]
+    [TypeFilter(typeof(SignedOutFilter))]
     public async Task<IActionResult> SignUp(SignUpViewModel model)
     {
         if (!ModelState.IsValid)
@@ -32,17 +37,17 @@ public class Accounts : Controller
             return View();
         }
 
-        var accountCreated =await _accountService.Add(model.Email, model.Password);
+        var accountCreated = await _accountService.Add(model.Email, model.Password);
         return RedirectToAction("SignIn");
     }
-
+    [TypeFilter(typeof(SignedOutFilter))]
     public IActionResult SignIn()
     {
         return View();
     }
 
     [HttpPost]
-
+    [TypeFilter(typeof(SignedOutFilter))]
     public async Task<IActionResult> SignIn(SignInViewModel model)
     {
         if (!ModelState.IsValid)
@@ -52,8 +57,8 @@ public class Accounts : Controller
 
         try
         {
-            var account = await _accountService.Login(model.Password, model.Email);
-            
+            var account = await _sessionAuthentication.Login(model.Email, model.Password);
+
             return RedirectToAction("Index", "Home");
 
         }
@@ -62,6 +67,13 @@ public class Accounts : Controller
             ModelState.AddModelError("", ex.Message);
             return View(model);
         }
-        
+
+
+    }
+    [TypeFilter(typeof(SignedInFilter))]
+    public ActionResult LogOut()
+    {
+        _sessionAuthentication.Logout();
+        return RedirectToAction("SignIn");
     }
 }

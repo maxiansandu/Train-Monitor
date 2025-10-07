@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using EnviroSense.Web.Filters;
 using Microsoft.AspNetCore.Mvc;
 using TrainMonitor.web.Models;
 
@@ -6,18 +7,12 @@ namespace TrainMonitor.web.Controllers;
 
 public class HomeController : Controller
 {
-    private readonly ILogger<HomeController> _logger;
-
-    public HomeController(ILogger<HomeController> logger)
-    {
-        _logger = logger;
-    }
-
+    [TypeFilter(typeof(SignedInFilter))]
     public IActionResult Index()
     {
         return View();
     }
-
+    [TypeFilter(typeof(SignedInFilter))]
     public IActionResult Privacy()
     {
         return View();

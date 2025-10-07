@@ -9,15 +9,21 @@ using TrainMonitor.application;
 using TrainMonitor.application.Services.Accounts;
 using TrainMonitor.repository.Repositories;
 using Microsoft.AspNetCore.Http;
+using TrainMonitor.application.Authentication;
+using TrainMonitor.web.Authentication;
 
 var builder = WebApplication.CreateBuilder(args);
 
 //Services
-builder.Services.AddScoped<IAccountService,  AccountService>();
+builder.Services.AddScoped<IAccountService, AccountService>();
 builder.Services.AddDistributedMemoryCache();
 
+//Authentication
+builder.Services.AddScoped<IAuthenticationContext, AuthenticationContext>();
+builder.Services.AddScoped<ISessionAuthentication, SessionAuthentication>();
+
 // Add services to the container.
-builder.Services.AddControllersWithViews(); 
+builder.Services.AddControllersWithViews();
 
 
 //Session
@@ -40,8 +46,8 @@ using (var connection = new MySqlConnection(connectionString))
 {
     var evolve = new Evolve(connection, msg => Console.WriteLine(msg))
     {
-        Locations = new[] { "/home/nicu/Documents/Trains/TrainMonitor.repository/Migrations" }, 
-        IsEraseDisabled = true, 
+        Locations = new[] { "/home/nicu/Documents/Trains/TrainMonitor.repository/Migrations" },
+        IsEraseDisabled = true,
     };
 
     try

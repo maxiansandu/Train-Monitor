@@ -7,11 +7,11 @@ using Microsoft.AspNetCore.Http;
 
 
 namespace TrainMonitor.application.Services.Accounts;
-public class AccountService: IAccountService
+public class AccountService : IAccountService
 {
     private readonly IAccountRepository _accountRepository;
     private readonly IHttpContextAccessor _httpContextAccessor;
-    
+
 
 
     public AccountService(IAccountRepository accountRepository, IHttpContextAccessor httpContextAccessor)
@@ -23,10 +23,10 @@ public class AccountService: IAccountService
     {
         return await _accountRepository.IsEmailTakenAsync(email);
     }
-    
+
     public async Task<Account> Add(string email, string password)
     {
-       
+
         string hashedPassword = BCryptNet.HashPassword(password, 10);
         var account = new Account()
         {
@@ -36,20 +36,18 @@ public class AccountService: IAccountService
             CreatedAt = DateTime.UtcNow,
         };
         var accountAdded = await _accountRepository.AddAsync(account);
-       
+
         return accountAdded;
     }
 
-    public async Task<Account> Login(string password, string email)
+    public async Task<Account> GetAccountByEmail(string email)
     {
-        var account = await _accountRepository.LogInAsync(password, email);
-        if (account ==null)
-        {
-            throw new AccountNotFoundException();
-        }
-        _httpContextAccessor.HttpContext.Session.SetString("authenticated_account_id", account.Id.ToString());
-        return account;
-
+        return await _accountRepository.GetAccountByEmailAsync(email);
     }
-    
+
+    public Task<Account> GetAccountById(Guid accountId)
+    {
+        throw new NotImplementedException();
+    }
+
 }

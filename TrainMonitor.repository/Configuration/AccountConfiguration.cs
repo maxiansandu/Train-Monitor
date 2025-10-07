@@ -4,7 +4,7 @@ using TrainMonitor.domain.Entities;
 
 namespace TrainMonitor.repository.Configuration;
 
-public class AccountConfiguration: IEntityTypeConfiguration<Account>
+public class AccountConfiguration : IEntityTypeConfiguration<Account>
 {
     public void Configure(EntityTypeBuilder<Account> builder)
     {

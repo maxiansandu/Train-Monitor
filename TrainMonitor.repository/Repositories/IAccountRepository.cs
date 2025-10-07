@@ -6,5 +6,6 @@ public interface IAccountRepository
 {
     Task<bool> IsEmailTakenAsync(string email);
     Task<Account> AddAsync(Account account);
-    Task<Account> LogInAsync(string hashedPassword, string email);
+    Task<Account> GetAccountByEmailAsync(string email);
+    Task<Account> GetAccountByIdAsync(Guid accountId);
 }

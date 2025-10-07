@@ -4,7 +4,7 @@ using TrainMonitor.domain.Entities;
 
 namespace TrainMonitor.repository.Configuration;
 
-public class TrainConfiguration: IEntityTypeConfiguration<Train>
+public class TrainConfiguration : IEntityTypeConfiguration<Train>
 {
     public void Configure(EntityTypeBuilder<Train> builder)
     {

@@ -12,5 +12,10 @@ public class TrainConfiguration : IEntityTypeConfiguration<Train>
         builder.HasKey(t => t.Id);
         builder.Property(t => t.Id).HasColumnName("id");
         builder.Property(t => t.Name).HasColumnName("name");
+        builder.Property(t => t.TrainNumber).HasColumnName("train_number");
+        builder.Property(t => t.DelayMinutes).HasColumnName("delay_minutes");
+        builder.Property(t => t.NextStop).HasColumnName("next_stop");
+        builder.Property(t => t.LastUpdated).HasColumnName("last_updated");
+    
     }
 }

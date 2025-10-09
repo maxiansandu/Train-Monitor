@@ -10,13 +10,21 @@ using TrainMonitor.application.Services.Accounts;
 using TrainMonitor.repository.Repositories;
 using Microsoft.AspNetCore.Http;
 using TrainMonitor.application.Authentication;
+using TrainMonitor.application.LoadTrains;
+using TrainMonitor.application.Services.Trains;
 using TrainMonitor.web.Authentication;
+using TrainMonitor.repository.Repositories.Trains;
 
 var builder = WebApplication.CreateBuilder(args);
+
+//LoadAllTrainsService
+builder.Services.AddScoped<ILoadAllTrainsFromJson, LoadAllAllTrainsFromJson>();
+
 
 //Services
 builder.Services.AddScoped<IAccountService, AccountService>();
 builder.Services.AddDistributedMemoryCache();
+builder.Services.AddScoped<ITrains, Trains>();
 
 //Authentication
 builder.Services.AddScoped<IAuthenticationContext, AuthenticationContext>();
@@ -37,6 +45,7 @@ builder.Services.AddSession(options =>
 builder.Services.AddHttpContextAccessor();
 //Respositories
 builder.Services.AddScoped<IAccountRepository, AccountRepository>();
+builder.Services.AddScoped<ITrainsRepositry, TrainsRepository>();
 
 
 
@@ -84,6 +93,10 @@ app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}")
     .WithStaticAssets();
-
+using (var scope = app.Services.CreateScope())
+{
+    var seeder = scope.ServiceProvider.GetRequiredService<ITrains>();
+    await seeder.AddTrain();
+}
 
 app.Run();

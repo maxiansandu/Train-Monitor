@@ -1,16 +1,35 @@
 using System.Diagnostics;
 using EnviroSense.Web.Filters;
 using Microsoft.AspNetCore.Mvc;
+using TrainMonitor.application.Services.Trains;
 using TrainMonitor.web.Models;
+using TrainMonitor.web.Models.Home;
 
 namespace TrainMonitor.web.Controllers;
 
 public class HomeController : Controller
 {
-    [TypeFilter(typeof(SignedInFilter))]
-    public IActionResult Index()
+    private readonly ITrains _trains;
+
+    public HomeController(ITrains trains)
     {
-        return View();
+        _trains = trains;
+    }
+    [TypeFilter(typeof(SignedInFilter))]
+    public async Task<IActionResult> Index()
+    {
+        
+        var trains = await _trains.GetAllTrains();
+        var viewModelList = trains.Select(t => new HomePageViewModel
+        {
+            Name = t.Name,
+            TrainNumber = t.TrainNumber,
+            DelayMinutes = t.DelayMinutes,
+            NextStop = t.NextStop,
+            LastUpdated = t.LastUpdated
+
+        }).ToList();
+        return View(viewModelList);
     }
     [TypeFilter(typeof(SignedInFilter))]
     public IActionResult Privacy()

@@ -1,8 +1,40 @@
-﻿@{
+﻿@model List<TrainMonitor.web.Models.Home.HomePageViewModel>
+@{
     ViewData["Title"] = "Home Page";
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+<div class="container mt-4">
+    <h1 class="mb-4 text-center">🚆 Train Monitor Dashboard</h1>
+
+    <div class="row g-3">
+        @if (Model != null && Model.Any())
+        {
+            foreach (var t in Model)
+            {
+                <div class="col-md-4">
+                    <div class="card p-3 border-start border-5 
+                        @(t.DelayMinutes == 0 ? "border-success" 
+                        : t.DelayMinutes < 10 ? "border-warning" 
+                        : "border-danger")">
+                        
+                        <div class="d-flex justify-content-between align-items-center">
+                            <h5>@t.Name (@t.TrainNumber)</h5>
+                            <span class="fw-bold text-@(t.DelayMinutes == 0 ? "success" : t.DelayMinutes < 10 ? "warning" : "danger")">
+                                @(t.DelayMinutes == 0 ? "ON TIME" : $"{t.DelayMinutes} min delay")
+                            </span>
+                        </div>
+
+                        <p class="mb-1"><strong>Next stop:</strong> @t.NextStop</p>
+                        <p class="mb-0"><small>Last updated: @t.LastUpdated.ToString("HH:mm")</small></p>
+                    </div>
+                </div>
+            }
+        }
+        else
+        {
+            <div class="text-center text-muted">
+                <p>No trains available at the moment.</p>
+            </div>
+        }
+    </div>
 </div>

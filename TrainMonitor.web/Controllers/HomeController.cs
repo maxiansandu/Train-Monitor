@@ -18,10 +18,10 @@ public class HomeController : Controller
     [TypeFilter(typeof(SignedInFilter))]
     public async Task<IActionResult> Index()
     {
-        
         var trains = await _trains.GetAllTrains();
         var viewModelList = trains.Select(t => new HomePageViewModel
         {
+            Id = t.Id,
             Name = t.Name,
             TrainNumber = t.TrainNumber,
             DelayMinutes = t.DelayMinutes,

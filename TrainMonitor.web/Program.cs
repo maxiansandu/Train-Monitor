@@ -11,14 +11,21 @@ using TrainMonitor.repository.Repositories;
 using Microsoft.AspNetCore.Http;
 using TrainMonitor.application.Authentication;
 using TrainMonitor.application.LoadTrains;
+using TrainMonitor.application.Services;
 using TrainMonitor.application.Services.Trains;
 using TrainMonitor.web.Authentication;
 using TrainMonitor.repository.Repositories.Trains;
+using TrainMonitor.application.Hubs;
+using TrainMonitor.application.LoadTrains.DeserializeFromfile;
 
 var builder = WebApplication.CreateBuilder(args);
 
+
+builder.Services.AddControllersWithViews();
+builder.Services.AddSignalR();
+
 //LoadAllTrainsService
-builder.Services.AddScoped<ILoadAllTrainsFromJson, LoadAllAllTrainsFromJson>();
+builder.Services.AddScoped<IRead, Read>();
 
 
 //Services
@@ -46,6 +53,7 @@ builder.Services.AddHttpContextAccessor();
 //Respositories
 builder.Services.AddScoped<IAccountRepository, AccountRepository>();
 builder.Services.AddScoped<ITrainsRepositry, TrainsRepository>();
+builder.Services.AddHostedService<TrainUpdateService>();
 
 
 
@@ -73,7 +81,11 @@ using (var connection = new MySqlConnection(connectionString))
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString)));
 var app = builder.Build();
+app.UseStaticFiles();
+app.UseRouting();
 
+app.MapHub<TrainHub>("/trainHub");
+app.MapDefaultControllerRoute();
 
 
 // Configure the HTTP request pipeline.
@@ -95,8 +107,8 @@ app.MapControllerRoute(
     .WithStaticAssets();
 using (var scope = app.Services.CreateScope())
 {
-    var seeder = scope.ServiceProvider.GetRequiredService<ITrains>();
-    await seeder.AddTrain();
+    var seeder = scope.ServiceProvider.GetRequiredService<IRead>();
+    await seeder.ReadJson(0);
 }
 
 app.Run();

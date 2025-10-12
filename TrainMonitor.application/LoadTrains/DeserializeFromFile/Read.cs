@@ -19,7 +19,7 @@ public class Read:Root, IRead
             string id = train.ReturnValue.Id;
             string name = train.Name;
             string trainNumber = train.ReturnValue.Train;
-            int? delay = train.ReturnValue.WaitingTime;
+            int? delay = train.ReturnValue.ArrivingTime;
             string? nextStop = null;
            
             int safeIndex;

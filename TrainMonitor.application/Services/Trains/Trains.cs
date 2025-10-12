@@ -6,7 +6,7 @@ using TrainMonitor.application.LoadTrains.DeserializeFromfile;
 
 namespace TrainMonitor.application.Services.Trains;
 
-public class Trains:LoadAllAllTrainsFromJson,ITrains
+public class Trains: ITrains
 {
     private readonly ITrainsRepositry _trainsRepositry;
     private readonly IRead _read;
@@ -15,12 +15,6 @@ public class Trains:LoadAllAllTrainsFromJson,ITrains
     {
         _trainsRepositry = trainsRepositry;
         _read = read;
-    }
-    public async Task AddTrain()
-    {
-        int index = 1;
-        var trainsToAdd = await GetTrains(index);
-        await _trainsRepositry.AddTrain(trainsToAdd);
     }
     
     public async Task<List<Train>> GetAllTrains()

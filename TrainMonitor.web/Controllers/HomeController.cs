@@ -21,6 +21,7 @@ public class HomeController : Controller
         var trains = await _trains.GetAllTrains();
         var viewModelList = trains.Select(t => new HomePageViewModel
         {
+            Id = t.Id,
             Name = t.Name,
             TrainNumber = t.TrainNumber,
             DelayMinutes = t.DelayMinutes,

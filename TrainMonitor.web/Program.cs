@@ -23,8 +23,8 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllersWithViews();
 builder.Services.AddSignalR();
+
 //LoadAllTrainsService
-builder.Services.AddScoped<ILoadAllTrainsFromJson, LoadAllAllTrainsFromJson>();
 builder.Services.AddScoped<IRead, Read>();
 
 

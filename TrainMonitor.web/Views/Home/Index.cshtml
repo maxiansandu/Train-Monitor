@@ -6,17 +6,17 @@
 <div class="container mt-4">
     <h1 class="mb-4 text-center">🚆 Train Monitor Dashboard</h1>
 
-    <div class="row g-3">
+    <div class="row g-3" id="trainsContainer">
         @if (Model != null && Model.Any())
         {
             foreach (var t in Model)
             {
                 <div class="col-md-4">
                     <div class="card p-3 border-start border-5 
-                        @(t.DelayMinutes == 0 ? "border-success" 
-                        : t.DelayMinutes < 10 ? "border-warning" 
-                        : "border-danger")">
-                        
+                    @(t.DelayMinutes == 0 ? "border-success" 
+                    : t.DelayMinutes < 10 ? "border-warning" 
+                    : "border-danger")">
+                    
                         <div class="d-flex justify-content-between align-items-center">
                             <h5>@t.Name (@t.TrainNumber)</h5>
                             <span class="fw-bold text-@(t.DelayMinutes == 0 ? "success" : t.DelayMinutes < 10 ? "warning" : "danger")">
@@ -25,7 +25,7 @@
                         </div>
 
                         <p class="mb-1"><strong>Next stop:</strong> @t.NextStop</p>
-                        <p class="mb-0"><small>Last updated: @t.LastUpdated.ToString("HH:mm")</small></p>
+                        <p class="mb-0"><small>Last updated: @t.LastUpdated.ToString("HH:mm:ss")</small></p>
                     </div>
                 </div>
             }
@@ -38,3 +38,64 @@
         }
     </div>
 </div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.0/signalr.min.js"></script>
+<script>
+const connection = new signalR.HubConnectionBuilder()
+    .withUrl("/trainHub")
+    .build();
+
+// ascultăm update-urile live
+connection.on("ReceiveTrainUpdate", (trains) => {
+    trains.forEach(train => {
+        const cardWrapper = document.getElementById(`train-${train.id}`);
+        if (cardWrapper) {
+            // actualizează doar elementele care se pot schimba
+            const delaySpan = cardWrapper.querySelector(".train-delay");
+            const nextStopP = cardWrapper.querySelector(".train-nextStop");
+            const lastUpdatedP = cardWrapper.querySelector(".train-lastUpdated");
+            const cardDiv = cardWrapper.querySelector(".card");
+
+            if (delaySpan) {
+                delaySpan.textContent = train.delayMinutes === 0 ? "ON TIME" : `${train.delayMinutes} min delay`;
+                delaySpan.className = `fw-bold text-${train.delayMinutes === 0 ? "success" : train.delayMinutes < 10 ? "warning" : "danger"}`;
+            }
+
+            if (nextStopP) {
+                nextStopP.textContent = `Next stop: ${train.nextStop}`;
+            }
+
+            if (lastUpdatedP) {
+                lastUpdatedP.textContent = `Last updated: ${new Date(train.lastUpdated).toLocaleTimeString()}`;
+            }
+
+            if (cardDiv) {
+                cardDiv.className = `card p-3 border-start border-5 ${train.delayMinutes === 0 ? "border-success" : train.delayMinutes < 10 ? "border-warning" : "border-danger"}`;
+            }
+        } else {
+            // dacă nu există card-ul, creează-l complet
+            const container = document.getElementById("trainsContainer");
+            const newCardWrapper = document.createElement("div");
+            newCardWrapper.className = "col-md-4";
+            newCardWrapper.id = `train-${train.id}`;
+            newCardWrapper.innerHTML = `
+                <div class="card p-3 border-start border-5 ${train.delayMinutes === 0 ? "border-success" : train.delayMinutes < 10 ? "border-warning" : "border-danger"}">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5>${train.name} (${train.trainNumber})</h5>
+                        <span class="train-delay fw-bold text-${train.delayMinutes === 0 ? "success" : train.delayMinutes < 10 ? "warning" : "danger"}">
+                            ${train.delayMinutes === 0 ? "ON TIME" : train.delayMinutes + " min delay"}
+                        </span>
+                    </div>
+                    <p class="train-nextStop mb-1"><strong>Next stop:</strong> ${train.nextStop}</p>
+                    <p class="train-lastUpdated mb-0"><small>Last updated: ${new Date(train.lastUpdated).toLocaleTimeString()}</small></p>
+                </div>
+            `;
+            container.appendChild(newCardWrapper);
+        }
+    });
+});
+
+connection.start()
+    .then(() => console.log("✅ Connected to SignalR"))
+    .catch(err => console.error(err));
+</script>

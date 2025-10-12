@@ -15,22 +15,41 @@ public class HomeController : Controller
     {
         _trains = trains;
     }
+
     [TypeFilter(typeof(SignedInFilter))]
     public async Task<IActionResult> Index()
     {
         var trains = await _trains.GetAllTrains();
-        var viewModelList = trains.Select(t => new HomePageViewModel
+        var allTrains = new List<TrainsListViewModel>();
+        foreach (var train in trains)
         {
-            Id = t.Id,
-            Name = t.Name,
-            TrainNumber = t.TrainNumber,
-            DelayMinutes = t.DelayMinutes,
-            NextStop = t.NextStop,
-            LastUpdated = t.LastUpdated
+            allTrains.Add(new TrainsListViewModel
+            {
+                Id = train.Id,
+                Name = train.Name,
+                TrainNumber = train.TrainNumber,
+                DelayMinutes = train.DelayMinutes,
+                NextStop = train.NextStop,
+                LastUpdated = train.LastUpdated
 
-        }).ToList();
-        return View(viewModelList);
+            });
+
+        }
+
+        var model = new HomePageViewModel
+        {
+            TrainsList = allTrains,
+        };
+    return View(model);
     }
+    [TypeFilter(typeof(SignedInFilter))]
+    [HttpPost]
+    public IActionResult Feedback(HomePageViewModel model)
+    {
+        var message  = model.AditionalMessage;
+        return RedirectToAction(nameof(Index));
+    }
+    
     [TypeFilter(typeof(SignedInFilter))]
     public IActionResult Privacy()
     {

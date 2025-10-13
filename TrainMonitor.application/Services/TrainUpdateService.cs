@@ -39,7 +39,7 @@ public class TrainUpdateService : BackgroundService
             if (data == null)
             {
                 data = await read.ReadJson(0);
-                _lastFileHash = ComputeFileHash(fullPath); 
+                _lastFileHash = ComputeFileHash(fullPath);
             }
 
             string currentHash = ComputeFileHash(fullPath);
@@ -47,7 +47,7 @@ public class TrainUpdateService : BackgroundService
             if (currentHash != _lastFileHash)
             {
                 data = await read.ReadJson(0);
-                _lastFileHash = currentHash; 
+                _lastFileHash = currentHash;
             }
 
             _latestTrains = new Collection<Train>(

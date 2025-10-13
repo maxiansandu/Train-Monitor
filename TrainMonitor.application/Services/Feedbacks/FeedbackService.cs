@@ -17,4 +17,9 @@ public class FeedbackService: IFeedbackService
     {
         return await _feedbackRepository.AddAsync(feedBack);
     }
+
+    public async Task<List<FeedBack>> GetAllFeedbacksForTrain(int trainNumber)
+    {
+        return await _feedbackRepository.GetAllFeedbacksForTrainAsync(trainNumber);
+    }
 }

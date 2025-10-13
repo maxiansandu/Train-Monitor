@@ -26,4 +26,9 @@ public class Trains: ITrains
     {
         return await _trainsRepositry.GetTrainByNumberAsync(trainNumber);
     }
+
+    public async Task SetFeedback(Train train)
+    {
+         await _trainsRepositry.SetFeedbackAsync(train);
+    }
 }

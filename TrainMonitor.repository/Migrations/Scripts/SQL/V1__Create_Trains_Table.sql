@@ -6,6 +6,6 @@ CREATE TABLE trains
     delay_minutes int null ,
     next_stop varchar(100),
     last_updated timestamp,
-    feedbacks boolean null
+    has_feedback boolean null
     
 );

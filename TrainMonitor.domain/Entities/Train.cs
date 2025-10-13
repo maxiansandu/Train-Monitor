@@ -10,7 +10,7 @@ public class Train
     public DateTime LastUpdated { get; set; }
 
     public bool HasFeedback = false;
-    public ICollection<FeedBack> FeedBacks { get; set; } = new List<FeedBack>();
+    public virtual ICollection<FeedBack> FeedBacks { get; set; } = new List<FeedBack>();
 }
     
     

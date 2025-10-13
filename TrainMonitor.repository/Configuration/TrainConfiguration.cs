@@ -16,6 +16,7 @@ public class TrainConfiguration : IEntityTypeConfiguration<Train>
         builder.Property(t => t.DelayMinutes).HasColumnName("delay_minutes");
         builder.Property(t => t.NextStop).HasColumnName("next_stop");
         builder.Property(t => t.LastUpdated).HasColumnName("last_updated");
+        builder.Property(t=>t.HasFeedback).HasColumnName("has_feedback");
     
     }
 }

@@ -40,4 +40,11 @@ public class TrainsRepository: ITrainsRepositry
     {
         return await _context.Trains.FirstOrDefaultAsync(t => t.TrainNumber == trainNumber);
     }
+
+    public async Task SetFeedbackAsync(Train train)
+    {
+        train.HasFeedback = true;
+        _context.Trains.Update(train);
+        await _context.SaveChangesAsync();
+    }
 }

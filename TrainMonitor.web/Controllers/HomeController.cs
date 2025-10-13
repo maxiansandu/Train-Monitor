@@ -40,7 +40,8 @@ public class HomeController : Controller
                 TrainNumber = train.TrainNumber,
                 DelayMinutes = train.DelayMinutes,
                 NextStop = train.NextStop,
-                LastUpdated = train.LastUpdated
+                LastUpdated = train.LastUpdated,
+                HasFeedback = train.HasFeedback,
 
             });
 
@@ -71,6 +72,12 @@ public class HomeController : Controller
         };
         
         var createdFeedback = await _feedbackService.Add(feedback);
+        if (createdFeedback == null)
+        {
+            throw new Exception("Failed to create feedback");
+        }
+
+        await _trains.SetFeedback(train);
         
         return RedirectToAction(nameof(Index));
     }

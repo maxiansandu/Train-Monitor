@@ -50,8 +50,15 @@
                                         data-train="@t.TrainNumber"
                                         data-bs-toggle="modal"
                                         data-bs-target="#feedbackModal">
-                                    💬 Give Feedback
+                                    💬 Give Feedbacks
                                 </button>
+                            }
+                            @if (t.HasFeedback)
+                            {
+                                <a asp-controller="Feedbacks" asp-action="ViewFeedbacks" asp-route-trainNumber="@t.TrainNumber"
+                                   class="btn btn-outline-success btn-sm w-100">
+                                    📋 View Feedbacks
+                                </a>
                             }
                         </div>
                     </div>
@@ -71,11 +78,11 @@
     <div class="modal-dialog">
         <div class="modal-content rounded-3 shadow-lg">
             <div class="modal-header">
-                <h5 class="modal-title" id="feedbackLabel">Train Delay Feedback</h5>
+                <h5 class="modal-title" id="feedbackLabel">Train Delay Feedbacks</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                <form method="post" action="/Home/Feedback">
+                <form method="post" asp-action="Feedback">
                     <input type="hidden" asp-for="TrainNumber" />
                     <div class="mb-3">
                         <label asp-for="Username" class="form-label"></label>
@@ -89,7 +96,7 @@
                         <label asp-for="AditionalMessage" class="form-label"></label>
                         <textarea asp-for="AditionalMessage" class="form-control"></textarea>
                     </div>
-                    <button type="submit" class="btn btn-primary w-100">📨 Submit Feedback</button>
+                    <button type="submit" class="btn btn-primary w-100">📨 Submit Feedbacks</button>
                 </form>
             </div>
         </div>
@@ -131,9 +138,9 @@ connection.on("ReceiveTrainUpdate", (trains) => {
                 button.dataset.train = train.trainNumber;
                 button.dataset.bsToggle = "modal";
                 button.dataset.bsTarget = "#feedbackModal";
-                button.textContent = "💬 Give Feedback";
+                button.textContent = "💬 Give Feedbacks";
                 liveSection.appendChild(button);
-                attachFeedbackButton(button);
+                attachFeedbacksButton(button);
             } else if (train.delayMinutes === 0 && btn) {
                 btn.remove();
             }
@@ -145,13 +152,13 @@ connection.start()
     .then(() => console.log("✅ Connected to SignalR"))
     .catch(err => console.error(err));
 
-function attachFeedbackButton(btn) {
+function attachFeedbacksButton(btn) {
     btn.addEventListener("click", () => {
         document.getElementById("TrainNumber").value = parseInt(btn.dataset.train);
     });
 }
 
-document.querySelectorAll(".feedback-btn").forEach(attachFeedbackButton);
+document.querySelectorAll(".feedback-btn").forEach(attachFeedbacksButton);
 
 document.getElementById("feedbackForm").addEventListener("submit", async (e) => {
     e.preventDefault();
@@ -164,7 +171,7 @@ document.getElementById("feedbackForm").addEventListener("submit", async (e) => 
     });
 
     if (response.ok) {
-        alert("Feedback sent successfully!");
+        alert("Feedbacks sent successfully!");
         form.reset();
         const modal = bootstrap.Modal.getInstance(document.getElementById("feedbackModal"));
         modal.hide();

@@ -9,4 +9,6 @@ public interface ITrainsRepositry
     Task <List<Train>> GetAllTrainsAsync();
     
     Task<Train> GetTrainByNumberAsync(int trainNumber);
+
+    Task SetFeedbackAsync(Train train);
 }

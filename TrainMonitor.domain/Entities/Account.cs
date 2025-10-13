@@ -8,5 +8,5 @@ public class Account
     public DateTime UpdatedAt { get; set; }
     public DateTime CreatedAt { get; set; }
     
-    public ICollection<FeedBack> FeedBacks { get; set; }
+    public virtual ICollection<FeedBack> FeedBacks { get; set; } = new List<FeedBack>();
 }

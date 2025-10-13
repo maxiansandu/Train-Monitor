@@ -83,8 +83,9 @@ using (var connection = new MySqlConnection(connectionString))
 }
 
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString)));
-var app = builder.Build();
+    options
+        .UseLazyLoadingProxies()
+        .UseMySql(connectionString, ServerVersion.AutoDetect(connectionString)));var app = builder.Build();
 app.UseStaticFiles();
 app.UseRouting();
 

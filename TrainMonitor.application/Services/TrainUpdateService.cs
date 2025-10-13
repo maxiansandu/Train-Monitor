@@ -6,7 +6,6 @@ using TrainMonitor.application.Hubs;
 using TrainMonitor.application.LoadTrains.DeserializeFromfile;
 using TrainMonitor.domain.Entities;
 using TrainMonitor.repository.Repositories.Trains;
-using System.Security.Cryptography;
 using TrainMonitor.application.LoadTrains;
 
 namespace TrainMonitor.application.Services;
@@ -29,7 +28,48 @@ public class TrainUpdateService : BackgroundService
         var index = 0;
         Root data = null;
         string fullPath = "/home/nicu/Documents/Trains/TrainMonitor.application/LoadTrains/task-j(1).json";
+        var watcher = new FileSystemWatcher("/home/nicu/Documents/Trains/TrainMonitor.application/LoadTrains")
+        {
+            Filter = "task-j(1).json",
+            NotifyFilter = NotifyFilters.LastWrite
+        };
 
+        watcher.Changed += async (s, e) =>
+        {
+            try
+            {
+                using var scope = _serviceProvider.CreateScope();
+                var trainsRepository = scope.ServiceProvider.GetRequiredService<ITrainsRepositry>();
+                var read = scope.ServiceProvider.GetRequiredService<IRead>();
+                var data = await read.ReadJson(0);
+
+                _latestTrains = new Collection<Train>(
+                    data.Data.Select(train =>
+                    {
+                        int safeIndex = Math.Min(0, train.ReturnValue.StopObjArray.Count - 1);
+                        return new Train
+                        {
+                            Id = train.ReturnValue.Id,
+                            Name = train.Name,
+                            TrainNumber = int.Parse(train.ReturnValue.Train),
+                            DelayMinutes = train.ReturnValue.ArrivingTime,
+                            NextStop = train.ReturnValue.StopObjArray[safeIndex].Title,
+                            LastUpdated = DateTime.UtcNow
+                        };
+                    }).ToList()
+                );
+
+                await _hubContext.Clients.All.SendAsync("ReceiveTrainUpdate", _latestTrains);
+                await trainsRepository.AddTrain(_latestTrains);
+
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error reading file: {ex.Message}");
+            }
+        };
+
+        watcher.EnableRaisingEvents = true;
         while (!stoppingToken.IsCancellationRequested)
         {
             using var scope = _serviceProvider.CreateScope();
@@ -39,15 +79,7 @@ public class TrainUpdateService : BackgroundService
             if (data == null)
             {
                 data = await read.ReadJson(0);
-                _lastFileHash = ComputeFileHash(fullPath);
-            }
 
-            string currentHash = ComputeFileHash(fullPath);
-
-            if (currentHash != _lastFileHash)
-            {
-                data = await read.ReadJson(0);
-                _lastFileHash = currentHash;
             }
 
             _latestTrains = new Collection<Train>(
@@ -70,18 +102,7 @@ public class TrainUpdateService : BackgroundService
             await trainsRepository.AddTrain(_latestTrains);
 
             index++;
-            await Task.Delay(TimeSpan.FromSeconds(3), stoppingToken);
+            await Task.Delay(TimeSpan.FromSeconds(30), stoppingToken);
         }
-    }
-
-    private static string ComputeFileHash(string filePath)
-    {
-        if (!File.Exists(filePath))
-            return string.Empty;
-
-        using var md5 = MD5.Create();
-        using var stream = File.OpenRead(filePath);
-        byte[] hashBytes = md5.ComputeHash(stream);
-        return BitConverter.ToString(hashBytes).Replace("-", "").ToLowerInvariant();
     }
 }

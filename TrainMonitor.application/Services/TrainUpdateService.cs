@@ -15,7 +15,6 @@ public class TrainUpdateService : BackgroundService
     private readonly IServiceProvider _serviceProvider;
     private readonly IHubContext<TrainHub> _hubContext;
     private Collection<Train> _latestTrains = new();
-    private string _lastFileHash = string.Empty;
 
     public TrainUpdateService(IServiceProvider serviceProvider, IHubContext<TrainHub> hubContext)
     {
@@ -28,6 +27,7 @@ public class TrainUpdateService : BackgroundService
         var index = 0;
         Root data = null;
         string fullPath = "/home/nicu/Documents/Trains/TrainMonitor.application/LoadTrains/task-j(1).json";
+
         var watcher = new FileSystemWatcher("/home/nicu/Documents/Trains/TrainMonitor.application/LoadTrains")
         {
             Filter = "task-j(1).json",
@@ -38,30 +38,7 @@ public class TrainUpdateService : BackgroundService
         {
             try
             {
-                using var scope = _serviceProvider.CreateScope();
-                var trainsRepository = scope.ServiceProvider.GetRequiredService<ITrainsRepositry>();
-                var read = scope.ServiceProvider.GetRequiredService<IRead>();
-                var data = await read.ReadJson(0);
-
-                _latestTrains = new Collection<Train>(
-                    data.Data.Select(train =>
-                    {
-                        int safeIndex = Math.Min(0, train.ReturnValue.StopObjArray.Count - 1);
-                        return new Train
-                        {
-                            Id = train.ReturnValue.Id,
-                            Name = train.Name,
-                            TrainNumber = int.Parse(train.ReturnValue.Train),
-                            DelayMinutes = train.ReturnValue.ArrivingTime,
-                            NextStop = train.ReturnValue.StopObjArray[safeIndex].Title,
-                            LastUpdated = DateTime.UtcNow
-                        };
-                    }).ToList()
-                );
-
-                await _hubContext.Clients.All.SendAsync("ReceiveTrainUpdate", _latestTrains);
-                await trainsRepository.AddTrain(_latestTrains);
-
+                await UpdateTrains(index, fullPath);
             }
             catch (Exception ex)
             {
@@ -70,39 +47,43 @@ public class TrainUpdateService : BackgroundService
         };
 
         watcher.EnableRaisingEvents = true;
+
         while (!stoppingToken.IsCancellationRequested)
         {
-            using var scope = _serviceProvider.CreateScope();
-            var trainsRepository = scope.ServiceProvider.GetRequiredService<ITrainsRepositry>();
-            var read = scope.ServiceProvider.GetRequiredService<IRead>();
-
             if (data == null)
             {
-                data = await read.ReadJson(0);
-
+                await UpdateTrains(index, fullPath);
             }
 
-            _latestTrains = new Collection<Train>(
-                data.Data.Select(train =>
-                {
-                    int safeIndex = Math.Min(index, train.ReturnValue.StopObjArray.Count - 1);
-                    return new Train
-                    {
-                        Id = train.ReturnValue.Id,
-                        Name = train.Name,
-                        TrainNumber = int.Parse(train.ReturnValue.Train),
-                        DelayMinutes = train.ReturnValue.ArrivingTime,
-                        NextStop = train.ReturnValue.StopObjArray[safeIndex].Title,
-                        LastUpdated = DateTime.UtcNow
-                    };
-                }).ToList()
-            );
-
-            await _hubContext.Clients.All.SendAsync("ReceiveTrainUpdate", _latestTrains);
-            await trainsRepository.AddTrain(_latestTrains);
-
             index++;
-            await Task.Delay(TimeSpan.FromSeconds(30), stoppingToken);
+            await Task.Delay(TimeSpan.FromSeconds(10), stoppingToken);
         }
+    }
+
+    private async Task UpdateTrains(int index, string fullPath)
+    {
+        using var scope = _serviceProvider.CreateScope();
+        var trainsRepository = scope.ServiceProvider.GetRequiredService<ITrainsRepositry>();
+        var read = scope.ServiceProvider.GetRequiredService<IRead>();
+        var data = await read.ReadJson(0);
+
+        _latestTrains = new Collection<Train>(
+            data.Data.Select(train =>
+            {
+                int safeIndex = Math.Min(index, train.ReturnValue.StopObjArray.Count - 1);
+                return new Train
+                {
+                    Id = train.ReturnValue.Id,
+                    Name = train.Name,
+                    TrainNumber = int.Parse(train.ReturnValue.Train),
+                    DelayMinutes = train.ReturnValue.ArrivingTime,
+                    NextStop = train.ReturnValue.StopObjArray[safeIndex].Title,
+                    LastUpdated = DateTime.UtcNow
+                };
+            }).ToList()
+        );
+
+        await _hubContext.Clients.All.SendAsync("ReceiveTrainUpdate", _latestTrains);
+        await trainsRepository.AddTrain(_latestTrains);
     }
 }

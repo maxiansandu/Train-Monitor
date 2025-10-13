@@ -7,7 +7,7 @@ namespace TrainMonitor.web.Controllers;
 
 public class Feedbacks : Controller
 {
-    private readonly IFeedbackService  _feedbackService;
+    private readonly IFeedbackService _feedbackService;
     public Feedbacks(IFeedbackService feedbackService)
     {
         _feedbackService = feedbackService;
@@ -21,11 +21,11 @@ public class Feedbacks : Controller
         foreach (var feedback in feedbacks)
         {
             feedbackList.Add(new FeedBackViewModelList
-                {
-                    Username = feedback.Username,
-                    ReasonForDelay = feedback.ReasonForDelay,
-                    AditionalMessage = feedback.AditionalMessage,
-                }
+            {
+                Username = feedback.Username,
+                ReasonForDelay = feedback.ReasonForDelay,
+                AditionalMessage = feedback.AditionalMessage,
+            }
             );
         }
         var firstFeedback = feedbacks.First();

@@ -3,7 +3,7 @@ using TrainMonitor.domain.Entities;
 
 namespace TrainMonitor.repository.Repositories.Trains;
 
-public class TrainsRepository: ITrainsRepositry
+public class TrainsRepository : ITrainsRepositry
 {
     private readonly ApplicationDbContext _context;
     public TrainsRepository(ApplicationDbContext context)

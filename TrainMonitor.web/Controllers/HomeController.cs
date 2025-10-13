@@ -15,8 +15,8 @@ public class HomeController : Controller
 {
     private readonly ITrains _trains;
     private readonly IAuthenticationContext _authenticationContext;
-    private readonly IFeedbackService  _feedbackService;
-    
+    private readonly IFeedbackService _feedbackService;
+
 
     public HomeController(ITrains trains, IAuthenticationContext authenticationContext, IFeedbackService feedbackService)
     {
@@ -51,16 +51,16 @@ public class HomeController : Controller
         {
             TrainsList = allTrains,
         };
-    return View(model);
+        return View(model);
     }
     [TypeFilter(typeof(SignedInFilter))]
     [HttpPost]
     public async Task<IActionResult> Feedback(HomePageViewModel model)
     {
-       
+
         var train = await _trains.GetTrainByNumber(model.TrainNumber);
         var account = await _authenticationContext.CurrentAccount();
-        
+
         var feedback = new FeedBack
         {
             Username = model.Username,
@@ -70,7 +70,7 @@ public class HomeController : Controller
             Train = train,
             Account = account
         };
-        
+
         var createdFeedback = await _feedbackService.Add(feedback);
         if (createdFeedback == null)
         {
@@ -78,10 +78,10 @@ public class HomeController : Controller
         }
 
         await _trains.SetFeedback(train);
-        
+
         return RedirectToAction(nameof(Index));
     }
-    
+
     [TypeFilter(typeof(SignedInFilter))]
     public IActionResult Privacy()
     {

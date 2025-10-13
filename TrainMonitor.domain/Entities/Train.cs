@@ -12,5 +12,4 @@ public class Train
     public bool HasFeedback = false;
     public virtual ICollection<FeedBack> FeedBacks { get; set; } = new List<FeedBack>();
 }
-    
-    
+

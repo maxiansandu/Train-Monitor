@@ -34,7 +34,7 @@ builder.Services.AddScoped<IRead, Read>();
 builder.Services.AddScoped<IAccountService, AccountService>();
 builder.Services.AddDistributedMemoryCache();
 builder.Services.AddScoped<ITrains, Trains>();
-builder.Services.AddScoped<IFeedbackService , FeedbackService>();
+builder.Services.AddScoped<IFeedbackService, FeedbackService>();
 
 //Authentication
 builder.Services.AddScoped<IAuthenticationContext, AuthenticationContext>();
@@ -57,7 +57,7 @@ builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<IAccountRepository, AccountRepository>();
 builder.Services.AddScoped<ITrainsRepositry, TrainsRepository>();
 builder.Services.AddHostedService<TrainUpdateService>();
-builder.Services.AddScoped<IFeedbackRepository , FeedbackRepository>();
+builder.Services.AddScoped<IFeedbackRepository, FeedbackRepository>();
 
 
 
@@ -85,7 +85,7 @@ using (var connection = new MySqlConnection(connectionString))
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options
         .UseLazyLoadingProxies()
-        .UseMySql(connectionString, ServerVersion.AutoDetect(connectionString)));var app = builder.Build();
+        .UseMySql(connectionString, ServerVersion.AutoDetect(connectionString))); var app = builder.Build();
 app.UseStaticFiles();
 app.UseRouting();
 

@@ -8,6 +8,6 @@ public class TrainsListViewModel
     public int? DelayMinutes { get; set; }
     public string NextStop { get; set; } = "";
     public DateTime LastUpdated { get; set; }
-    
+
     public bool HasFeedback { get; set; }
 }

@@ -5,7 +5,7 @@ using TrainMonitor.repository.Repositories.Feedbacks;
 
 namespace TrainMonitor.application.Services.Feedbacks;
 
-public class FeedbackService: IFeedbackService
+public class FeedbackService : IFeedbackService
 {
     private readonly IFeedbackRepository _feedbackRepository;
 

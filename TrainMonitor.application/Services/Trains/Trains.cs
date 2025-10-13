@@ -6,20 +6,20 @@ using TrainMonitor.application.LoadTrains.DeserializeFromfile;
 
 namespace TrainMonitor.application.Services.Trains;
 
-public class Trains: ITrains
+public class Trains : ITrains
 {
     private readonly ITrainsRepositry _trainsRepositry;
     private readonly IRead _read;
 
-    public Trains(ITrainsRepositry trainsRepositry,  IRead read)
+    public Trains(ITrainsRepositry trainsRepositry, IRead read)
     {
         _trainsRepositry = trainsRepositry;
         _read = read;
     }
-    
+
     public async Task<List<Train>> GetAllTrains()
     {
-        return  await _trainsRepositry.GetAllTrainsAsync();
+        return await _trainsRepositry.GetAllTrainsAsync();
     }
 
     public async Task<Train> GetTrainByNumber(int trainNumber)
@@ -29,6 +29,6 @@ public class Trains: ITrains
 
     public async Task SetFeedback(Train train)
     {
-         await _trainsRepositry.SetFeedbackAsync(train);
+        await _trainsRepositry.SetFeedbackAsync(train);
     }
 }

@@ -17,6 +17,8 @@ public class TrainsRepository : ITrainsRepositry
             var existing = await _context.Trains.FirstOrDefaultAsync(t => t.Id == train.Id);
             if (existing != null)
             {
+                existing.TrainNumber = train.TrainNumber;
+                existing.Name = train.Name;
                 existing.DelayMinutes = train.DelayMinutes;
                 existing.NextStop = train.NextStop;
                 existing.LastUpdated = DateTime.UtcNow;

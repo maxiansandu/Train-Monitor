@@ -1,19 +1,20 @@
 using System.Collections.ObjectModel;
 using Microsoft.Extensions.DependencyInjection;
-using TrainMonitor.domain.Entities;
-using TrainMonitor.repository.Repositories.Trains;
 using Microsoft.Extensions.Hosting;
 using Microsoft.AspNetCore.SignalR;
 using TrainMonitor.application.Hubs;
 using TrainMonitor.application.LoadTrains.DeserializeFromfile;
+using TrainMonitor.domain.Entities;
+using TrainMonitor.repository.Repositories.Trains;
+using TrainMonitor.application.LoadTrains;
 
 namespace TrainMonitor.application.Services;
+
 public class TrainUpdateService : BackgroundService
 {
     private readonly IServiceProvider _serviceProvider;
     private readonly IHubContext<TrainHub> _hubContext;
-    private readonly IRead _read;
-    private readonly ITrainsRepositry _trainsRepositry;
+    private Collection<Train> _latestTrains = new();
 
     public TrainUpdateService(IServiceProvider serviceProvider, IHubContext<TrainHub> hubContext)
     {
@@ -24,23 +25,65 @@ public class TrainUpdateService : BackgroundService
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         var index = 0;
+        Root data = null;
+        string fullPath = "/home/nicu/Documents/Trains/TrainMonitor.application/LoadTrains/task-j(1).json";
+
+        var watcher = new FileSystemWatcher("/home/nicu/Documents/Trains/TrainMonitor.application/LoadTrains")
+        {
+            Filter = "task-j(1).json",
+            NotifyFilter = NotifyFilters.LastWrite
+        };
+
+        watcher.Changed += async (s, e) =>
+        {
+            try
+            {
+                await UpdateTrains(index, fullPath);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error reading file: {ex.Message}");
+            }
+        };
+
+        watcher.EnableRaisingEvents = true;
+
         while (!stoppingToken.IsCancellationRequested)
         {
-            using (var scope = _serviceProvider.CreateScope())
+            if (data == null)
             {
-                var read = scope.ServiceProvider.GetRequiredService<IRead>();
-                var trainsRepository = scope.ServiceProvider.GetRequiredService<ITrainsRepositry>();
-
-                var data = await read.ReadJson(index);
-                index++;
-                var trainsCollection = new Collection<Train>(data);
-
-                await trainsRepository.AddTrain(trainsCollection);
-
-                await _hubContext.Clients.All.SendAsync("ReceiveTrainUpdate", trainsCollection);
+                await UpdateTrains(index, fullPath);
             }
 
+            index++;
             await Task.Delay(TimeSpan.FromSeconds(10), stoppingToken);
         }
+    }
+
+    private async Task UpdateTrains(int index, string fullPath)
+    {
+        using var scope = _serviceProvider.CreateScope();
+        var trainsRepository = scope.ServiceProvider.GetRequiredService<ITrainsRepositry>();
+        var read = scope.ServiceProvider.GetRequiredService<IRead>();
+        var data = await read.ReadJson(0);
+
+        _latestTrains = new Collection<Train>(
+            data.Data.Select(train =>
+            {
+                int safeIndex = Math.Min(index, train.ReturnValue.StopObjArray.Count - 1);
+                return new Train
+                {
+                    Id = train.ReturnValue.Id,
+                    Name = train.Name,
+                    TrainNumber = int.Parse(train.ReturnValue.Train),
+                    DelayMinutes = train.ReturnValue.ArrivingTime,
+                    NextStop = train.ReturnValue.StopObjArray[safeIndex].Title,
+                    LastUpdated = DateTime.UtcNow
+                };
+            }).ToList()
+        );
+
+        await _hubContext.Clients.All.SendAsync("ReceiveTrainUpdate", _latestTrains);
+        await trainsRepository.AddTrain(_latestTrains);
     }
 }

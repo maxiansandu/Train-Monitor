@@ -1,23 +1,25 @@
-﻿@model List<TrainMonitor.web.Models.Home.HomePageViewModel>
+﻿@model TrainMonitor.web.Models.Home.HomePageViewModel
 @{
     ViewData["Title"] = "Home Page";
 }
+
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
 
 <div class="container mt-4">
     <h1 class="mb-4 text-center">🚆 Train Monitor Dashboard</h1>
 
     <div class="row g-3" id="trainsContainer">
-        @if (Model != null && Model.Any())
+        @if (Model.TrainsList != null && Model.TrainsList.Any())
         {
-            foreach (var t in Model)
+            foreach (var t in Model.TrainsList)
             {
                 <div class="col-md-4" id="train-@t.Id">
                     <div class="card p-3 border-start border-5 
-                        @(t.DelayMinutes == 0 ? "border-success" 
-                        : t.DelayMinutes < 10 ? "border-warning" 
+                        @(t.DelayMinutes == 0 ? "border-success"
+                        : t.DelayMinutes < 10 ? "border-warning"
                         : "border-danger")">
 
-                        <!-- 🔹 Secțiunea generală (nu se schimbă live) -->
+                        <!-- 🔹 Secțiunea generală -->
                         <div class="mb-2">
                             <h5>@t.Name (@t.TrainNumber)</h5>
                             <p class="text-muted mb-1">
@@ -25,10 +27,9 @@
                             </p>
                         </div>
 
-                        <hr />
+                        <hr/>
 
-                        <!-- 🔸 Secțiunea live (actualizată prin SignalR) -->
-                        <div class="live-section">
+                        <div class="live-section mb-2">
                             <div class="d-flex justify-content-between align-items-center">
                                 <span class="train-delay fw-bold text-@(t.DelayMinutes == 0 ? "success" : t.DelayMinutes < 10 ? "warning" : "danger")">
                                     @(t.DelayMinutes == 0 ? "ON TIME" : $"{t.DelayMinutes} min delay")
@@ -39,9 +40,26 @@
                                 <strong>Next stop:</strong> @t.NextStop
                             </p>
 
-                            <p class="train-lastUpdated mb-0">
+                            <p class="train-lastUpdated mb-2">
                                 <small>Last updated: @t.LastUpdated.ToString("HH:mm:ss")</small>
                             </p>
+
+                            @if (t.DelayMinutes > 0)
+                            {
+                                <button class="btn btn-outline-primary btn-sm w-100 feedback-btn"
+                                        data-train="@t.TrainNumber"
+                                        data-bs-toggle="modal"
+                                        data-bs-target="#feedbackModal">
+                                    💬 Give Feedbacks
+                                </button>
+                            }
+                            @if (t.HasFeedback)
+                            {
+                                <a asp-controller="Feedbacks" asp-action="ViewFeedbacks" asp-route-trainNumber="@t.TrainNumber"
+                                   class="btn btn-outline-success btn-sm w-100">
+                                    📋 View Feedbacks
+                                </a>
+                            }
                         </div>
                     </div>
                 </div>
@@ -56,14 +74,44 @@
     </div>
 </div>
 
-<!-- SignalR script -->
+<div class="modal fade" id="feedbackModal" tabindex="-1" aria-labelledby="feedbackLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content rounded-3 shadow-lg">
+            <div class="modal-header">
+                <h5 class="modal-title" id="feedbackLabel">Train Delay Feedbacks</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form method="post" asp-action="Feedback">
+                    <input type="hidden" asp-for="TrainNumber" />
+                    <div class="mb-3">
+                        <label asp-for="Username" class="form-label"></label>
+                        <input asp-for="Username" class="form-control" />
+                    </div>
+                    <div class="mb-3">
+                        <label asp-for="ReasonForDelay" class="form-label"></label>
+                        <input asp-for="ReasonForDelay" class="form-control" />
+                    </div>
+                    <div class="mb-3">
+                        <label asp-for="AditionalMessage" class="form-label"></label>
+                        <textarea asp-for="AditionalMessage" class="form-control"></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100">📨 Submit Feedbacks</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.0/signalr.min.js"></script>
+
 <script>
 const connection = new signalR.HubConnectionBuilder()
     .withUrl("/trainHub")
     .build();
 
-// 🔁 Actualizare live
 connection.on("ReceiveTrainUpdate", (trains) => {
     trains.forEach(train => {
         const cardWrapper = document.getElementById(`train-${train.id}`);
@@ -73,50 +121,62 @@ connection.on("ReceiveTrainUpdate", (trains) => {
             const lastUpdatedP = cardWrapper.querySelector(".train-lastUpdated");
             const cardDiv = cardWrapper.querySelector(".card");
 
-            // actualizează doar valorile dinamice
             if (delaySpan) {
                 delaySpan.textContent = train.delayMinutes === 0 ? "ON TIME" : `${train.delayMinutes} min delay`;
                 delaySpan.className = `train-delay fw-bold text-${train.delayMinutes === 0 ? "success" : train.delayMinutes < 10 ? "warning" : "danger"}`;
             }
 
-            if (nextStopP) {
-                nextStopP.innerHTML = `<strong>Next stop:</strong> ${train.nextStop}`;
-            }
+            if (nextStopP) nextStopP.innerHTML = `<strong>Next stop:</strong> ${train.nextStop}`;
+            if (lastUpdatedP) lastUpdatedP.innerHTML = `<small>Last updated: ${new Date(train.lastUpdated).toLocaleTimeString()}</small>`;
+            if (cardDiv) cardDiv.className = `card p-3 border-start border-5 ${train.delayMinutes === 0 ? "border-success" : train.delayMinutes < 10 ? "border-warning" : "border-danger"}`;
 
-            if (lastUpdatedP) {
-                lastUpdatedP.innerHTML = `<small>Last updated: ${new Date(train.lastUpdated).toLocaleTimeString()}</small>`;
+            let btn = cardWrapper.querySelector(".feedback-btn");
+            if (train.delayMinutes > 0 && !btn) {
+                const liveSection = cardWrapper.querySelector(".live-section");
+                const button = document.createElement("button");
+                button.className = "btn btn-outline-primary btn-sm w-100 feedback-btn";
+                button.dataset.train = train.trainNumber;
+                button.dataset.bsToggle = "modal";
+                button.dataset.bsTarget = "#feedbackModal";
+                button.textContent = "💬 Give Feedbacks";
+                liveSection.appendChild(button);
+                attachFeedbacksButton(button);
+            } else if (train.delayMinutes === 0 && btn) {
+                btn.remove();
             }
-
-            if (cardDiv) {
-                cardDiv.className = `card p-3 border-start border-5 ${train.delayMinutes === 0 ? "border-success" : train.delayMinutes < 10 ? "border-warning" : "border-danger"}`;
-            }
-        } else {
-            // dacă e un tren nou, îl adăugăm complet
-            const container = document.getElementById("trainsContainer");
-            const newCardWrapper = document.createElement("div");
-            newCardWrapper.className = "col-md-4";
-            newCardWrapper.id = `train-${train.id}`;
-            newCardWrapper.innerHTML = `
-                <div class="card p-3 border-start border-5 ${train.delayMinutes === 0 ? "border-success" : train.delayMinutes < 10 ? "border-warning" : "border-danger"}">
-                    <div class="mb-2">
-                        <h5>${train.name} (${train.trainNumber})</h5>
-                        <p class="text-muted mb-1"><strong>Route:</strong> ${train.route}</p>
-                    </div>
-                    <hr/>
-                    <div class="live-section">
-                        <span class="train-delay fw-bold text-${train.delayMinutes === 0 ? "success" : train.delayMinutes < 10 ? "warning" : "danger"}">
-                            ${train.delayMinutes === 0 ? "ON TIME" : train.delayMinutes + " min delay"}
-                        </span>
-                        <p class="train-nextStop mb-1"><strong>Next stop:</strong> ${train.nextStop}</p>
-                        <p class="train-lastUpdated mb-0"><small>Last updated: ${new Date(train.lastUpdated).toLocaleTimeString()}</small></p>
-                    </div>
-                </div>`;
-            container.appendChild(newCardWrapper);
         }
     });
 });
 
 connection.start()
-    .then(() => console.log("Connected to SignalR"))
+    .then(() => console.log("✅ Connected to SignalR"))
     .catch(err => console.error(err));
+
+function attachFeedbacksButton(btn) {
+    btn.addEventListener("click", () => {
+        document.getElementById("TrainNumber").value = parseInt(btn.dataset.train);
+    });
+}
+
+document.querySelectorAll(".feedback-btn").forEach(attachFeedbacksButton);
+
+document.getElementById("feedbackForm").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const form = e.target;
+    const formData = new FormData(form);
+
+    const response = await fetch(form.action, {
+        method: "POST",
+        body: formData
+    });
+
+    if (response.ok) {
+        alert("Feedbacks sent successfully!");
+        form.reset();
+        const modal = bootstrap.Modal.getInstance(document.getElementById("feedbackModal"));
+        modal.hide();
+    } else {
+        alert("Failed to send feedback.");
+    }
+});
 </script>

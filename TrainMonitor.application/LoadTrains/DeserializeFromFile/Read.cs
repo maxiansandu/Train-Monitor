@@ -3,7 +3,7 @@ using TrainMonitor.domain.Entities;
 
 namespace TrainMonitor.application.LoadTrains.DeserializeFromfile;
 
-public class Read:Root, IRead
+public class Read : Root, IRead
 {
     public async Task<List<Train>> ReadJson(int index)
     {
@@ -18,10 +18,10 @@ public class Read:Root, IRead
 
             string id = train.ReturnValue.Id;
             string name = train.Name;
-            string trainNumber = train.ReturnValue.Train;
+            int trainNumber = int.Parse(train.ReturnValue.Train);
             int? delay = train.ReturnValue.ArrivingTime;
             string? nextStop = null;
-           
+
             int safeIndex;
             if (index >= train.ReturnValue.StopObjArray.Count)
             {

@@ -36,7 +36,7 @@ public class TrainUpdateService : BackgroundService
                 var trainsCollection = new Collection<Train>(data);
 
                 await trainsRepository.AddTrain(trainsCollection);
-                
+
                 await _hubContext.Clients.All.SendAsync("ReceiveTrainUpdate", trainsCollection);
             }
 

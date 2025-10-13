@@ -7,4 +7,6 @@ public class Account
     public required string Password { get; set; }
     public DateTime UpdatedAt { get; set; }
     public DateTime CreatedAt { get; set; }
+
+    public virtual ICollection<FeedBack> FeedBacks { get; set; } = new List<FeedBack>();
 }

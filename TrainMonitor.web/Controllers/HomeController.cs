@@ -1,7 +1,11 @@
 using System.Diagnostics;
 using EnviroSense.Web.Filters;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Mvc;
+using TrainMonitor.application.Authentication;
+using TrainMonitor.application.Services.Feedbacks;
 using TrainMonitor.application.Services.Trains;
+using TrainMonitor.domain.Entities;
 using TrainMonitor.web.Models;
 using TrainMonitor.web.Models.Home;
 
@@ -10,27 +14,74 @@ namespace TrainMonitor.web.Controllers;
 public class HomeController : Controller
 {
     private readonly ITrains _trains;
+    private readonly IAuthenticationContext _authenticationContext;
+    private readonly IFeedbackService _feedbackService;
 
-    public HomeController(ITrains trains)
+
+    public HomeController(ITrains trains, IAuthenticationContext authenticationContext, IFeedbackService feedbackService)
     {
         _trains = trains;
+        _authenticationContext = authenticationContext;
+        _feedbackService = feedbackService;
+
     }
+
     [TypeFilter(typeof(SignedInFilter))]
     public async Task<IActionResult> Index()
     {
         var trains = await _trains.GetAllTrains();
-        var viewModelList = trains.Select(t => new HomePageViewModel
+        var allTrains = new List<TrainsListViewModel>();
+        foreach (var train in trains)
         {
-            Id = t.Id,
-            Name = t.Name,
-            TrainNumber = t.TrainNumber,
-            DelayMinutes = t.DelayMinutes,
-            NextStop = t.NextStop,
-            LastUpdated = t.LastUpdated
+            allTrains.Add(new TrainsListViewModel
+            {
+                Id = train.Id,
+                Name = train.Name,
+                TrainNumber = train.TrainNumber,
+                DelayMinutes = train.DelayMinutes,
+                NextStop = train.NextStop,
+                LastUpdated = train.LastUpdated,
+                HasFeedback = train.HasFeedback,
 
-        }).ToList();
-        return View(viewModelList);
+            });
+
+        }
+
+        var model = new HomePageViewModel
+        {
+            TrainsList = allTrains,
+        };
+        return View(model);
     }
+    [TypeFilter(typeof(SignedInFilter))]
+    [HttpPost]
+    public async Task<IActionResult> Feedback(HomePageViewModel model)
+    {
+
+        var train = await _trains.GetTrainByNumber(model.TrainNumber);
+        var account = await _authenticationContext.CurrentAccount();
+
+        var feedback = new FeedBack
+        {
+            Username = model.Username,
+            ReasonForDelay = model.ReasonForDelay,
+            AditionalMessage = model.AditionalMessage,
+            TrainNumber = model.TrainNumber,
+            Train = train,
+            Account = account
+        };
+
+        var createdFeedback = await _feedbackService.Add(feedback);
+        if (createdFeedback == null)
+        {
+            throw new Exception("Failed to create feedback");
+        }
+
+        await _trains.SetFeedback(train);
+
+        return RedirectToAction(nameof(Index));
+    }
+
     [TypeFilter(typeof(SignedInFilter))]
     public IActionResult Privacy()
     {

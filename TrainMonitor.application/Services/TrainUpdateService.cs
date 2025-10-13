@@ -1,19 +1,22 @@
 using System.Collections.ObjectModel;
 using Microsoft.Extensions.DependencyInjection;
-using TrainMonitor.domain.Entities;
-using TrainMonitor.repository.Repositories.Trains;
 using Microsoft.Extensions.Hosting;
 using Microsoft.AspNetCore.SignalR;
 using TrainMonitor.application.Hubs;
 using TrainMonitor.application.LoadTrains.DeserializeFromfile;
+using TrainMonitor.domain.Entities;
+using TrainMonitor.repository.Repositories.Trains;
+using System.Security.Cryptography;
+using TrainMonitor.application.LoadTrains;
 
 namespace TrainMonitor.application.Services;
+
 public class TrainUpdateService : BackgroundService
 {
     private readonly IServiceProvider _serviceProvider;
     private readonly IHubContext<TrainHub> _hubContext;
-    private readonly IRead _read;
-    private readonly ITrainsRepositry _trainsRepositry;
+    private Collection<Train> _latestTrains = new();
+    private string _lastFileHash = string.Empty;
 
     public TrainUpdateService(IServiceProvider serviceProvider, IHubContext<TrainHub> hubContext)
     {
@@ -24,23 +27,61 @@ public class TrainUpdateService : BackgroundService
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         var index = 0;
+        Root data = null;
+        string fullPath = "/home/nicu/Documents/Trains/TrainMonitor.application/LoadTrains/task-j(1).json";
+
         while (!stoppingToken.IsCancellationRequested)
         {
-            using (var scope = _serviceProvider.CreateScope())
+            using var scope = _serviceProvider.CreateScope();
+            var trainsRepository = scope.ServiceProvider.GetRequiredService<ITrainsRepositry>();
+            var read = scope.ServiceProvider.GetRequiredService<IRead>();
+
+            if (data == null)
             {
-                var read = scope.ServiceProvider.GetRequiredService<IRead>();
-                var trainsRepository = scope.ServiceProvider.GetRequiredService<ITrainsRepositry>();
-
-                var data = await read.ReadJson(index);
-                index++;
-                var trainsCollection = new Collection<Train>(data);
-
-                await trainsRepository.AddTrain(trainsCollection);
-
-                await _hubContext.Clients.All.SendAsync("ReceiveTrainUpdate", trainsCollection);
+                data = await read.ReadJson(0);
+                _lastFileHash = ComputeFileHash(fullPath); 
             }
 
-            await Task.Delay(TimeSpan.FromSeconds(10), stoppingToken);
+            string currentHash = ComputeFileHash(fullPath);
+
+            if (currentHash != _lastFileHash)
+            {
+                data = await read.ReadJson(0);
+                _lastFileHash = currentHash; 
+            }
+
+            _latestTrains = new Collection<Train>(
+                data.Data.Select(train =>
+                {
+                    int safeIndex = Math.Min(index, train.ReturnValue.StopObjArray.Count - 1);
+                    return new Train
+                    {
+                        Id = train.ReturnValue.Id,
+                        Name = train.Name,
+                        TrainNumber = int.Parse(train.ReturnValue.Train),
+                        DelayMinutes = train.ReturnValue.ArrivingTime,
+                        NextStop = train.ReturnValue.StopObjArray[safeIndex].Title,
+                        LastUpdated = DateTime.UtcNow
+                    };
+                }).ToList()
+            );
+
+            await _hubContext.Clients.All.SendAsync("ReceiveTrainUpdate", _latestTrains);
+            await trainsRepository.AddTrain(_latestTrains);
+
+            index++;
+            await Task.Delay(TimeSpan.FromSeconds(3), stoppingToken);
         }
+    }
+
+    private static string ComputeFileHash(string filePath)
+    {
+        if (!File.Exists(filePath))
+            return string.Empty;
+
+        using var md5 = MD5.Create();
+        using var stream = File.OpenRead(filePath);
+        byte[] hashBytes = md5.ComputeHash(stream);
+        return BitConverter.ToString(hashBytes).Replace("-", "").ToLowerInvariant();
     }
 }

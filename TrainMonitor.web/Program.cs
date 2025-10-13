@@ -115,5 +115,4 @@ using (var scope = app.Services.CreateScope())
     var seeder = scope.ServiceProvider.GetRequiredService<IRead>();
     await seeder.ReadJson(0);
 }
-
 app.Run();

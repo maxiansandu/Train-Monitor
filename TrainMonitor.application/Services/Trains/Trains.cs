@@ -21,4 +21,9 @@ public class Trains: ITrains
     {
         return  await _trainsRepositry.GetAllTrainsAsync();
     }
+
+    public async Task<Train> GetTrainByNumber(int trainNumber)
+    {
+        return await _trainsRepositry.GetTrainByNumberAsync(trainNumber);
+    }
 }

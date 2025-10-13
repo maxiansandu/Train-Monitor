@@ -35,4 +35,9 @@ public class TrainsRepository: ITrainsRepositry
         var trains = await _context.Trains.ToListAsync();
         return trains;
     }
+
+    public async Task<Train> GetTrainByNumberAsync(int trainNumber)
+    {
+        return await _context.Trains.FirstOrDefaultAsync(t => t.TrainNumber == trainNumber);
+    }
 }

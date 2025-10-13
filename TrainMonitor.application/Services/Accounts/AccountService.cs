@@ -45,9 +45,9 @@ public class AccountService : IAccountService
         return await _accountRepository.GetAccountByEmailAsync(email);
     }
 
-    public Task<Account> GetAccountById(Guid accountId)
+    public async Task<Account> GetAccountById(Guid accountId)
     {
-        throw new NotImplementedException();
+        return await _accountRepository.GetAccountByIdAsync(accountId);
     }
 
 }

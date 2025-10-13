@@ -75,24 +75,20 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                <form id="feedbackForm" method="post" action="/Home/Feedback">
-                    <input type="hidden" name="trainNumber" id="trainNumber" />
-
+                <form method="post" action="/Home/Feedback">
+                    <input type="hidden" asp-for="TrainNumber" />
                     <div class="mb-3">
-                        <label asp-for="username" class="form-label">👤 Username</label>
-                        <input asp-for="username" type="text" class="form-control" id="username" name="username" placeholder="Enter your name" required />
+                        <label asp-for="Username" class="form-label"></label>
+                        <input asp-for="Username" class="form-control" />
                     </div>
-
                     <div class="mb-3">
-                        <label asp-for="ReasonForDelay"  class="form-label">🚆 Reason for delay</label>
-                        <input asp-for="ReasonForDelay" type="text" class="form-control" id="reason" placeholder="Describe the reason" required />
+                        <label asp-for="ReasonForDelay" class="form-label"></label>
+                        <input asp-for="ReasonForDelay" class="form-control" />
                     </div>
-
                     <div class="mb-3">
-                        <label asp-for="AditionalMessage" class="form-label">💬 Additional comment</label>
-                        <textarea asp-for="AditionalMessage" id="comment" class="form-control" rows="3" placeholder="Optional comment..."></textarea>
+                        <label asp-for="AditionalMessage" class="form-label"></label>
+                        <textarea asp-for="AditionalMessage" class="form-control"></textarea>
                     </div>
-
                     <button type="submit" class="btn btn-primary w-100">📨 Submit Feedback</button>
                 </form>
             </div>
@@ -151,7 +147,7 @@ connection.start()
 
 function attachFeedbackButton(btn) {
     btn.addEventListener("click", () => {
-        document.getElementById("trainNumber").value = btn.dataset.train;
+        document.getElementById("TrainNumber").value = parseInt(btn.dataset.train);
     });
 }
 

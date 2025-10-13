@@ -1,7 +1,11 @@
 using System.Diagnostics;
 using EnviroSense.Web.Filters;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Mvc;
+using TrainMonitor.application.Authentication;
+using TrainMonitor.application.Services.Feedbacks;
 using TrainMonitor.application.Services.Trains;
+using TrainMonitor.domain.Entities;
 using TrainMonitor.web.Models;
 using TrainMonitor.web.Models.Home;
 
@@ -10,10 +14,16 @@ namespace TrainMonitor.web.Controllers;
 public class HomeController : Controller
 {
     private readonly ITrains _trains;
+    private readonly IAuthenticationContext _authenticationContext;
+    private readonly IFeedbackService  _feedbackService;
+    
 
-    public HomeController(ITrains trains)
+    public HomeController(ITrains trains, IAuthenticationContext authenticationContext, IFeedbackService feedbackService)
     {
         _trains = trains;
+        _authenticationContext = authenticationContext;
+        _feedbackService = feedbackService;
+
     }
 
     [TypeFilter(typeof(SignedInFilter))]
@@ -44,9 +54,24 @@ public class HomeController : Controller
     }
     [TypeFilter(typeof(SignedInFilter))]
     [HttpPost]
-    public IActionResult Feedback(HomePageViewModel model)
+    public async Task<IActionResult> Feedback(HomePageViewModel model)
     {
-        var message  = model.AditionalMessage;
+       
+        var train = await _trains.GetTrainByNumber(model.TrainNumber);
+        var account = await _authenticationContext.CurrentAccount();
+        
+        var feedback = new FeedBack
+        {
+            Username = model.Username,
+            ReasonForDelay = model.ReasonForDelay,
+            AditionalMessage = model.AditionalMessage,
+            TrainNumber = model.TrainNumber,
+            Train = train,
+            Account = account
+        };
+        
+        var createdFeedback = await _feedbackService.Add(feedback);
+        
         return RedirectToAction(nameof(Index));
     }
     

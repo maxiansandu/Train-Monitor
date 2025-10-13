@@ -26,6 +26,8 @@ public class AuthenticationContext : IAuthenticationContext
 
     public async Task<Account?> CurrentAccount()
     {
-        throw new NotImplementedException();
+        var accountId = _httpContextAccessor.HttpContext.Session.GetString("authenticated_account_id");
+        var id = Guid.Parse(accountId);
+        return await _accountService.GetAccountById(id);
     }
 }
